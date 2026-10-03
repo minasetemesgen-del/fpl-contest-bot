@@ -14,14 +14,14 @@ import os
 #   PAYMENT_INSTRUCTIONS    (optional, has a default below)
 # ---------------------------------------------------------------------------
 
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
+BOT_TOKEN = os.environ.get("8820934232:AAFIPFkUi9zDn63rHwF8W4D9q0IVIrLykqQ")
 if not BOT_TOKEN:
     raise ValueError(
         "BOT_TOKEN is not set. Add it as an environment variable "
         "(Railway: Project -> Variables -> BOT_TOKEN)."
     )
 
-_admin_id = os.environ.get("ADMIN_TELEGRAM_ID")
+_admin_id = os.environ.get("364334238")
 if not _admin_id:
     raise ValueError(
         "ADMIN_TELEGRAM_ID is not set. Add it as an environment variable "
@@ -44,7 +44,7 @@ PAYMENT_INSTRUCTIONS = os.environ.get(
 # to get your secret key. Use the TEST key while trying things out (starts
 # with CHASECK_TEST-), then switch to the LIVE key once ready for real money.
 # ---------------------------------------------------------------------------
-CHAPA_SECRET_KEY = os.environ.get("CHAPA_SECRET_KEY")
+CHAPA_SECRET_KEY = os.environ.get("CHASECK_TEST-rbxJWBUA6Rq0959T2PR00VHTs07J7UVl")
 if not CHAPA_SECRET_KEY:
     raise ValueError(
         "CHAPA_SECRET_KEY is not set. Add it as an environment variable "
