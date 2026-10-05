@@ -138,8 +138,9 @@ def create_payment_link(tx_ref, amount, first_name, last_name, telegram_id):
         "currency": "ETB",
         # Chapa requires an email; users don't give us one, so we use a
         # placeholder tied to their Telegram ID — this is fine, Chapa doesn't
-        # actually send anything to it.
-        "email": f"user{telegram_id}@fplcontest.bot",
+        # actually send anything to it. Using .com (a real, recognized TLD)
+        # since Chapa's validator rejects unusual endings like .bot.
+        "email": f"user{telegram_id}@example.com",
         "first_name": first_name or "FPL",
         "last_name": last_name or "Player",
         "tx_ref": tx_ref,
