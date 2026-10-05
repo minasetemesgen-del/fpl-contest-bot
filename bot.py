@@ -298,7 +298,7 @@ async def my_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     status = "Not entered this gameweek yet."
     if entry:
-        status = "✅ Payment confirmed, you're entered!" if entry[0] else "⏳ Payment pending admin confirmation."
+        status = "✅ Payment confirmed, you're entered!" if entry[0] else "⏳ Waiting for payment to complete — check back in a minute after paying."
     await update.message.reply_text(f"FPL Team ID: {row[0]}\nGameweek {gw}: {status}")
 
 
