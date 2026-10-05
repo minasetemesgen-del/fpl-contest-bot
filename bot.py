@@ -144,16 +144,22 @@ def create_payment_link(tx_ref, amount, first_name, last_name, telegram_id):
         "last_name": last_name or "Player",
         "tx_ref": tx_ref,
         "return_url": CHAPA_RETURN_URL,
+        # Chapa limits customization.title to 16 characters — keep this short.
         "customization": {
-            "title": "FPL Weekly Contest",
-            "description": f"Entry fee GW - {amount} ETB",
+            "title": "FPL Contest",
+            "description": f"GW entry fee - {amount} ETB",
         },
     }
     resp = requests.post(CHAPA_INITIALIZE_URL, json=payload, headers=chapa_headers(), timeout=15)
-    resp.raise_for_status()
+    if resp.status_code != 200:
+        # Log Chapa's actual explanation instead of just "400 Bad Request",
+        # so any future issue is immediately readable in the logs.
+        logger.error(f"Chapa initialize rejected ({resp.status_code}): {resp.text}")
+        return None
     data = resp.json()
     if data.get("status") == "success":
         return data["data"]["checkout_url"]
+    logger.error(f"Chapa initialize returned non-success: {data}")
     return None
 
 
