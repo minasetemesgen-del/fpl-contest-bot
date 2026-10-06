@@ -21,6 +21,7 @@ Data is stored locally in fpl_contest.db (SQLite) — no external database neede
 import logging
 import sqlite3
 import time
+from datetime import datetime, timezone
 import requests
 from telegram import Update
 from telegram.ext import (
@@ -106,6 +107,34 @@ def get_current_gameweek():
         if event["is_next"]:
             return event["id"]
     return None
+
+
+def get_gameweek_deadline(gameweek):
+    """Returns the FPL transfer-lock deadline for a gameweek as a UTC
+    datetime, or None if it can't be found. This is the same moment FPL
+    itself locks everyone's squad — entries must close no later than this,
+    otherwise someone could pay after watching live scores and know in
+    advance whether they're winning."""
+    resp = requests.get(FPL_BOOTSTRAP_URL, timeout=10)
+    resp.raise_for_status()
+    events = resp.json()["events"]
+    for event in events:
+        if event["id"] == gameweek:
+            # FPL gives this as ISO 8601 UTC, e.g. "2026-10-04T10:00:00Z"
+            return datetime.strptime(event["deadline_time"], "%Y-%m-%dT%H:%M:%SZ").replace(
+                tzinfo=timezone.utc
+            )
+    return None
+
+
+def entries_are_still_open(gameweek):
+    """True only if this gameweek's FPL deadline hasn't passed yet."""
+    deadline = get_gameweek_deadline(gameweek)
+    if deadline is None:
+        # If we can't confirm the deadline, fail safe and block entry rather
+        # than risk letting someone pay in after results are already known.
+        return False
+    return datetime.now(timezone.utc) < deadline
 
 
 def get_gameweek_score(team_id, gameweek):
@@ -225,6 +254,23 @@ async def pay(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     gw = get_current_gameweek()
+
+    # Entries must close at FPL's own deadline — the same moment squads lock
+    # for everyone. Without this, someone could wait, watch live scores, and
+    # only pay once they know they're winning. Fail safe: if we can't
+    # confirm the deadline for any reason, block entry rather than risk it.
+    try:
+        still_open = entries_are_still_open(gw)
+    except Exception:
+        logger.exception("Could not check FPL deadline")
+        still_open = False
+    if not still_open:
+        await update.message.reply_text(
+            f"⛔ Entries for GW{gw} are closed — the FPL deadline has already "
+            "passed. You can enter again once the next gameweek opens."
+        )
+        return
+
     existing = db_execute(
         "SELECT paid, tx_reference FROM entries WHERE telegram_id=? AND gameweek=?",
         (user.id, gw),
